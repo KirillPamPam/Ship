@@ -7,7 +7,7 @@ import javax.swing.plaf.nimbus.NimbusLookAndFeel;
  * Created by Kirill Zhitelev on 30.05.2016.
  */
 public class MainForm extends JFrame {
-    private static final int WIDTH = 800, HEIGHT = 670;
+    private static final int WIDTH = 800, HEIGHT = 720;
 
     public MainForm() {
         initMetalLookAndFeel();
