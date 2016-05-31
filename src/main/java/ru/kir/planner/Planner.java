@@ -28,6 +28,12 @@ public class Planner extends JPanel {
     private JTextField shipSpeed = new JTextField();
     private JTextField shipCapacity = new JTextField();
     private JTextField containersSpeed = new JTextField();
+    private JComboBox maps;
+    private int km = 200, px = 80;
+    private String[] items = {
+            "Средиземное море",
+            "Балтийское море",
+    };
 
     public Planner() {
         init();
@@ -35,24 +41,27 @@ public class Planner extends JPanel {
         click();
     }
 
+    @SuppressWarnings("unchecked")
     private void init() {
         setLayout(null);
-        try {
-            seaMap = ImageIO.read(getClass().getResourceAsStream("/Sredizemnoe.jpg"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
-        shipSpeed.setBounds(25, 580, 80, 25);
-        containers.setBounds(175, 580, 80, 25);
-        daysNavigation.setBounds(320, 580, 80, 25);
-        shipCapacity.setBounds(465, 580, 80, 25);
-        containersSpeed.setBounds(640, 580, 80, 25);
+        initImage("/Sredizemnoe.jpg");
 
-        drawLineButton.setBounds(230, 615, 100, 25);
-        clearButton.setBounds(335, 615, 80, 25);
-        calculateButton.setBounds(420, 615, 100, 25);
+        maps = new JComboBox(items);
 
+        maps.setBounds(0, 0, 150, 25);
+
+        shipSpeed.setBounds(25, 620, 80, 25);
+        containers.setBounds(175, 620, 80, 25);
+        daysNavigation.setBounds(320, 620, 80, 25);
+        shipCapacity.setBounds(465, 620, 80, 25);
+        containersSpeed.setBounds(640, 620, 80, 25);
+
+        drawLineButton.setBounds(230, 655, 100, 25);
+        clearButton.setBounds(335, 655, 80, 25);
+        calculateButton.setBounds(420, 655, 100, 25);
+
+        add(maps);
         add(calculateButton);
         add(containers);
         add(daysNavigation);
@@ -69,7 +78,10 @@ public class Planner extends JPanel {
             public void mouseClicked(MouseEvent e) {
                 xPosition = e.getX();
                 yPosition = e.getY();
-                if(drawPoint && yPosition <= seaMap.getHeight()-5) {
+                int x = (getWidth() - seaMap.getWidth(null)) / 2;
+                if(drawPoint  && yPosition >= 42 && yPosition <= seaMap.getHeight() + 35
+                        && xPosition >= x
+                        && xPosition <= seaMap.getWidth() + x -5) {
                     coordinates.add(new Coordinate(xPosition, yPosition));
                 }
             }
@@ -78,11 +90,12 @@ public class Planner extends JPanel {
         calculateButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(checkFieldsAndRoute())
+                if (checkFieldsAndRoute())
                     calculateHours();
                 else
                     JOptionPane.showMessageDialog(getRootPane(), "Заполните поля и нарисуйте маршрут", " Ошибка",
                             JOptionPane.ERROR_MESSAGE);
+
             }
         });
 
@@ -99,20 +112,53 @@ public class Planner extends JPanel {
         clearButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                setDefaultTextToFields();
+                clearAction();
+            }
+        });
 
-                coordinates.clear();
-                drawLine = false;
-                drawPoint = true;
-                repaint();
+        maps.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(maps.getSelectedItem() == "Средиземное море") {
+                    initImage("/Sredizemnoe.jpg");
+                    km = 200;
+                    px = 80;
+                }
+                else if(maps.getSelectedItem() == "Балтийское море") {
+                    initImage("/Baltiyskoye.jpg");
+                    km = 150;
+                    px = 66;
+                }
+                clearAction();
             }
         });
     }
 
+    private void clearAction() {
+        setDefaultTextToFields();
+
+        coordinates.clear();
+        drawLine = false;
+        drawPoint = true;
+        repaint();
+    }
+
+    private void initImage(String path) {
+        try {
+            seaMap = ImageIO.read(getClass().getResourceAsStream(path));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        repaint();
+    }
+
     @Override
     public void paintComponent(Graphics g) {
+        super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
-        g2.drawImage(seaMap, 0, 0, this);
+        int x = (getWidth() - seaMap.getWidth(null)) / 2;
+        g2.drawImage(seaMap, x, 40, this);
         g2.setStroke(new BasicStroke(2));
 
         drawTitles(g2);
@@ -122,11 +168,11 @@ public class Planner extends JPanel {
 
     private void drawTitles(Graphics2D g2) {
         g2.setFont(new Font("arial", Font.BOLD, 13));
-        drawString(g2, "Скорость корабля\n(км/ч)", 10, 545);
-        drawString(g2, "Кол-во контейнеров", 150, 545);
-        drawString(g2, "Период навигации\n(дни)", 300, 545);
-        drawString(g2, "Грузоподъемность\n(контейнеры)", 450, 545);
-        drawString(g2, "Скорость загрузки/разгрузки\n(контейнеры/ч)", 600, 545);
+        drawString(g2, "Скорость корабля\n(км/ч)", 10, 585);
+        drawString(g2, "Кол-во контейнеров", 150, 585);
+        drawString(g2, "Период навигации\n(дни)", 300, 585);
+        drawString(g2, "Грузоподъемность\n(контейнеры)", 450, 585);
+        drawString(g2, "Скорость загрузки/разгрузки\n(контейнеры/ч)", 600, 585);
     }
 
     private void drawString(Graphics g2, String text, int x, int y) {
@@ -158,7 +204,7 @@ public class Planner extends JPanel {
             xVector = coordinates.get(i+1).getX() - coordinates.get(i).getX();
             yVector = coordinates.get(i+1).getY() - coordinates.get(i).getY();
 
-            distance += (200 * Math.sqrt(Math.pow(xVector, 2) + Math.pow(yVector, 2))) / 80;
+            distance += (km * Math.sqrt(Math.pow(xVector, 2) + Math.pow(yVector, 2))) / px;
 
         }
 
